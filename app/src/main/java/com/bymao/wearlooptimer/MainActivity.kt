@@ -195,9 +195,9 @@ private fun TimerMainView(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ActionButton(icon = Icons.Filled.PlayArrow, onClick = onStart)
-            ActionButton(icon = Icons.Filled.Pause, onClick = onPause)
-            ActionButton(icon = Icons.Filled.Stop, onClick = onStop)
+            ActionButton(icon = Icons.Filled.PlayArrow, contentDesc = "Start", onClick = onStart)
+            ActionButton(icon = Icons.Filled.Pause, contentDesc = "Pause", onClick = onPause)
+            ActionButton(icon = Icons.Filled.Stop, contentDesc = "Stop", onClick = onStop)
         }
     }
 }
@@ -253,7 +253,7 @@ private fun PickerView(
 }
 
 @Composable
-private fun ActionButton(icon: ImageVector, onClick: () -> Unit) {
+private fun ActionButton(icon: ImageVector, contentDesc: String, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         shape = RoundedCornerShape(14.dp),
@@ -262,7 +262,7 @@ private fun ActionButton(icon: ImageVector, onClick: () -> Unit) {
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
+            contentDescription = contentDesc,
             tint = Color.White,
             modifier = Modifier.size(28.dp)
         )
