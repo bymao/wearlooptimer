@@ -45,7 +45,9 @@ import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Picker
 import androidx.wear.compose.material.Text
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.wear.compose.material.rememberPickerState
 import kotlinx.coroutines.delay
 
@@ -95,6 +97,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun TimerScreen() {
     val context = LocalContext.current
+    val view = LocalView.current
     var hour by remember { mutableIntStateOf(9) }
     var minute by remember { mutableIntStateOf(20) }
     var running by remember { mutableStateOf(false) }
@@ -116,6 +119,11 @@ private fun TimerScreen() {
             running = false
             vibrateThreeTimes(context)
         }
+    }
+
+    DisposableEffect(running) {
+        view.keepScreenOn = running
+        onDispose { view.keepScreenOn = false }
     }
 
     val displayHour = (remainingSeconds / 3600).toInt()
