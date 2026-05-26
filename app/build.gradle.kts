@@ -23,12 +23,23 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+    }
+
+    // Generate separate APKs per CPU architecture to reduce per-APK size
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
         }
     }
 
@@ -54,7 +65,8 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.1")
     implementation("androidx.wear.compose:compose-material:1.4.1")
-    implementation("androidx.compose.material:material-icons-extended:1.7.0")
+    // Use core icons only (instead of extended) to avoid the ~30MB icon bloat
+    implementation("androidx.compose.material:material-icons-core:1.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("androidx.wear:wear:1.3.0")
 }
