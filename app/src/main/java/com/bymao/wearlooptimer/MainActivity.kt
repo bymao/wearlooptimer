@@ -80,11 +80,11 @@ private fun TimerScreen() {
 
     LaunchedEffect(running) {
         if (!running) return@LaunchedEffect
-        while (running && remainingSeconds > 0) {
+        while (remainingSeconds > 0) {
             delay(1_000)
             remainingSeconds -= 1
         }
-        if (running && remainingSeconds <= 0) {
+        if (remainingSeconds <= 0) {
             running = false
             vibrateForFiveSeconds(context)
         }
@@ -268,12 +268,15 @@ private fun PickerView(
 
 private fun vibrateForFiveSeconds(context: Context) {
     val durationMs = 5_000L
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-        vibratorManager.defaultVibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+        vibratorManager?.defaultVibrator
     } else {
         @Suppress("DEPRECATION")
-        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+    }
+
+    if (vibrator?.hasVibrator() == true) {
         vibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 }
