@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -245,7 +246,7 @@ private fun PickerView(
                 Picker(
                     state = pickerState,
                     contentDescription = "${suffix}_picker",
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.width(80.dp)
                 ) { option ->
                     Text(
                         text = "%02d".format(option),

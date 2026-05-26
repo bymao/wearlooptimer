@@ -10,10 +10,6 @@ A simple countdown timer app for Android Wear OS watches.
 - Three rounded-square action buttons at the bottom: **Start / Pause / End**
 - A 5-second vibration alert is triggered when the countdown reaches zero
 
-## Preview
-
-![UI Preview](ui-preview.png)
-
 ## Build
 
 ```bash
