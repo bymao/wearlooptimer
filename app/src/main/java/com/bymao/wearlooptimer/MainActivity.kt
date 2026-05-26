@@ -36,9 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.Stop
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Icon
@@ -48,6 +48,33 @@ import androidx.wear.compose.material.Text
 import androidx.compose.ui.platform.LocalContext
 import androidx.wear.compose.material.rememberPickerState
 import kotlinx.coroutines.delay
+
+private val IconPause: ImageVector by lazy {
+    ImageVector.Builder(
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(fill = SolidColor(Color.Black)) {
+            moveTo(6f, 19f); horizontalLineTo(10f); verticalLineTo(5f); horizontalLineTo(6f); close()
+            moveTo(14f, 19f); horizontalLineTo(18f); verticalLineTo(5f); horizontalLineTo(14f); close()
+        }
+    }.build()
+}
+
+private val IconStop: ImageVector by lazy {
+    ImageVector.Builder(
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(fill = SolidColor(Color.Black)) {
+            moveTo(6f, 6f); horizontalLineTo(18f); verticalLineTo(18f); horizontalLineTo(6f); close()
+        }
+    }.build()
+}
 
 enum class TimePart { HOUR, MINUTE }
 enum class ScreenMode { TIMER, PICKER_HOUR, PICKER_MINUTE }
@@ -207,8 +234,8 @@ private fun TimerMainView(
             verticalAlignment = Alignment.CenterVertically
         ) {
             ActionButton(icon = Icons.Filled.PlayArrow, contentDesc = "Start", onClick = onStart)
-            ActionButton(icon = Icons.Filled.Pause, contentDesc = "Pause", onClick = onPause)
-            ActionButton(icon = Icons.Filled.Stop, contentDesc = "Stop", onClick = onStop)
+            ActionButton(icon = IconPause, contentDesc = "Pause", onClick = onPause)
+            ActionButton(icon = IconStop, contentDesc = "Stop", onClick = onStop)
         }
     }
 }
