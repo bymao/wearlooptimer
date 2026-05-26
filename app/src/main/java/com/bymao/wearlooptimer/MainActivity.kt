@@ -1,6 +1,11 @@
 package com.bymao.wearlooptimer
 
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -13,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,6 +45,7 @@ import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Picker
 import androidx.wear.compose.material.Text
+import androidx.compose.ui.platform.LocalContext
 import androidx.wear.compose.material.rememberPickerState
 import kotlinx.coroutines.delay
 
@@ -58,6 +65,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun TimerScreen() {
+    val context = LocalContext.current
     var hour by remember { mutableIntStateOf(9) }
     var minute by remember { mutableIntStateOf(20) }
     var running by remember { mutableStateOf(false) }
@@ -71,12 +79,14 @@ private fun TimerScreen() {
     }
 
     LaunchedEffect(running) {
+        if (!running) return@LaunchedEffect
         while (running && remainingSeconds > 0) {
             delay(1_000)
             remainingSeconds -= 1
         }
-        if (remainingSeconds <= 0) {
+        if (running && remainingSeconds <= 0) {
             running = false
+            vibrateForFiveSeconds(context)
         }
     }
 
@@ -181,7 +191,7 @@ private fun TimerMainView(
             )
             Text(
                 text = "%02d".format(displaySecond),
-                color = Color.White,
+                color = Color.Gray,
                 fontSize = 48.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -228,27 +238,43 @@ private fun PickerView(
                 .weight(2f),
             contentAlignment = Alignment.Center
         ) {
-            Picker(
-                state = pickerState,
-                contentDescription = "${suffix}_picker",
-                modifier = Modifier.fillMaxSize()
-            ) { option ->
-                Row(verticalAlignment = Alignment.Bottom) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Picker(
+                    state = pickerState,
+                    contentDescription = "${suffix}_picker",
+                    modifier = Modifier.weight(1f)
+                ) { option ->
                     Text(
                         text = "%02d".format(option),
                         color = Color.White,
                         fontSize = 52.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(
-                        text = suffix,
-                        color = Color.Gray,
-                        fontSize = 18.sp,
-                        modifier = Modifier.padding(start = 6.dp, bottom = 8.dp)
-                    )
                 }
+                Text(
+                    text = suffix,
+                    color = Color.Gray,
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(start = 6.dp, end = 10.dp)
+                )
             }
         }
+    }
+}
+
+private fun vibrateForFiveSeconds(context: Context) {
+    val durationMs = 5_000L
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+        vibratorManager.defaultVibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+    } else {
+        @Suppress("DEPRECATION")
+        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        vibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 }
 
