@@ -1,4 +1,7 @@
 # wearlooptimer
+
+[English](docs/README_EN.md)
+
 一个安卓手表自动倒计时 APP。
 
 ## 已实现界面与交互
@@ -8,3 +11,15 @@
 
 ## 预览图
 ![UI 预览](docs/ui-preview.png)
+
+## 编译
+
+```bash
+./gradlew :app:assembleDebug
+```
+
+生成的 APK 位于 `app/build/outputs/apk/debug/`。
+
+## 自动编译
+
+本项目已配置 GitHub Actions，每次推送到 `main` 分支或提交 Pull Request 时会自动编译，并将 APK 上传为构建产物。
