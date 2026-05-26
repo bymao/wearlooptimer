@@ -51,6 +51,7 @@ import kotlinx.coroutines.delay
 
 enum class TimePart { HOUR, MINUTE }
 enum class ScreenMode { TIMER, PICKER_HOUR, PICKER_MINUTE }
+private const val COUNTDOWN_FINISH_VIBRATION_MS = 5_000L
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,12 +80,11 @@ private fun TimerScreen() {
     }
 
     LaunchedEffect(running) {
-        if (!running) return@LaunchedEffect
-        while (remainingSeconds > 0) {
+        while (running && remainingSeconds > 0) {
             delay(1_000)
             remainingSeconds -= 1
         }
-        if (remainingSeconds <= 0) {
+        if (running && remainingSeconds <= 0) {
             running = false
             vibrateForFiveSeconds(context)
         }
@@ -267,7 +267,6 @@ private fun PickerView(
 }
 
 private fun vibrateForFiveSeconds(context: Context) {
-    val durationMs = 5_000L
     val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
         vibratorManager?.defaultVibrator
@@ -277,7 +276,12 @@ private fun vibrateForFiveSeconds(context: Context) {
     }
 
     if (vibrator?.hasVibrator() == true) {
-        vibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createOneShot(COUNTDOWN_FINISH_VIBRATION_MS, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(COUNTDOWN_FINISH_VIBRATION_MS)
+        }
     }
 }
 
