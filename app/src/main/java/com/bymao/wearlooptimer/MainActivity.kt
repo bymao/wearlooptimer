@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,8 +28,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Picker
 import androidx.wear.compose.material.Text
@@ -38,6 +43,7 @@ import androidx.wear.compose.material.rememberPickerState
 import kotlinx.coroutines.delay
 
 enum class TimePart { HOUR, MINUTE }
+enum class ScreenMode { TIMER, PICKER_HOUR, PICKER_MINUTE }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,9 +60,9 @@ class MainActivity : ComponentActivity() {
 private fun TimerScreen() {
     var hour by remember { mutableIntStateOf(9) }
     var minute by remember { mutableIntStateOf(20) }
-    var selectedPart by remember { mutableStateOf(TimePart.MINUTE) }
     var running by remember { mutableStateOf(false) }
     var remainingSeconds by remember { mutableLongStateOf(hour * 3600L + minute * 60L) }
+    var screenMode by remember { mutableStateOf(ScreenMode.TIMER) }
 
     LaunchedEffect(hour, minute, running) {
         if (!running) {
@@ -76,102 +82,189 @@ private fun TimerScreen() {
 
     val displayHour = (remainingSeconds / 3600).toInt()
     val displayMinute = ((remainingSeconds % 3600) / 60).toInt()
+    val displaySecond = (remainingSeconds % 60).toInt()
 
-    val hourPickerState = rememberPickerState(initialNumberOfOptions = 24, initiallySelectedOption = hour)
-    val minutePickerState = rememberPickerState(initialNumberOfOptions = 60, initiallySelectedOption = minute)
+    when (screenMode) {
+        ScreenMode.TIMER -> {
+            TimerMainView(
+                displayHour = displayHour,
+                displayMinute = displayMinute,
+                displaySecond = displaySecond,
+                running = running,
+                onHourClick = { if (!running) screenMode = ScreenMode.PICKER_HOUR },
+                onMinuteClick = { if (!running) screenMode = ScreenMode.PICKER_MINUTE },
+                onStart = { if (remainingSeconds > 0) running = true },
+                onPause = { running = false },
+                onStop = { running = false; remainingSeconds = 0 }
+            )
+        }
+        ScreenMode.PICKER_HOUR -> {
+            PickerView(
+                initialValue = hour,
+                maxValue = 24,
+                suffix = "小时",
+                onConfirm = { value ->
+                    hour = value
+                    screenMode = ScreenMode.TIMER
+                }
+            )
+        }
+        ScreenMode.PICKER_MINUTE -> {
+            PickerView(
+                initialValue = minute,
+                maxValue = 60,
+                suffix = "分钟",
+                onConfirm = { value ->
+                    minute = value
+                    screenMode = ScreenMode.TIMER
+                }
+            )
+        }
+    }
+}
 
-    LaunchedEffect(hourPickerState.selectedOption) {
-        hour = hourPickerState.selectedOption
+@Composable
+private fun TimerMainView(
+    displayHour: Int,
+    displayMinute: Int,
+    displaySecond: Int,
+    running: Boolean,
+    onHourClick: () -> Unit,
+    onMinuteClick: () -> Unit,
+    onStart: () -> Unit,
+    onPause: () -> Unit,
+    onStop: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .padding(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Time display - fills horizontal screen
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "%02d".format(displayHour),
+                color = Color.White,
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable(onClick = onHourClick)
+            )
+            Text(
+                text = ":",
+                color = Color.White,
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 2.dp)
+            )
+            Text(
+                text = "%02d".format(displayMinute),
+                color = Color.White,
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable(onClick = onMinuteClick)
+            )
+            Text(
+                text = ":",
+                color = Color.White,
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 2.dp)
+            )
+            Text(
+                text = "%02d".format(displaySecond),
+                color = Color.White,
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        // Buttons row - large icons, no text labels
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ActionButton(icon = Icons.Filled.PlayArrow, contentDesc = "Start", onClick = onStart)
+            ActionButton(icon = Icons.Filled.Pause, contentDesc = "Pause", onClick = onPause)
+            ActionButton(icon = Icons.Filled.Stop, contentDesc = "Stop", onClick = onStop)
+        }
     }
-    LaunchedEffect(minutePickerState.selectedOption) {
-        minute = minutePickerState.selectedOption
-    }
+}
+
+@Composable
+private fun PickerView(
+    initialValue: Int,
+    maxValue: Int,
+    suffix: String,
+    onConfirm: (Int) -> Unit
+) {
+    val pickerState = rememberPickerState(
+        initialNumberOfOptions = maxValue,
+        initiallySelectedOption = initialValue
+    )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .clickable { onConfirm(pickerState.selectedOption) },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Column(
+        Box(
             modifier = Modifier
-                .weight(2f)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxWidth()
+                .weight(2f),
+            contentAlignment = Alignment.Center
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = displayHour.toString(),
-                    color = Color.White,
-                    fontSize = 40.sp,
-                    fontWeight = if (selectedPart == TimePart.HOUR) FontWeight.Bold else FontWeight.Normal,
-                    modifier = Modifier.clickable { selectedPart = TimePart.HOUR }
-                )
-                Text(text = ":", color = Color.White, fontSize = 40.sp, modifier = Modifier.padding(horizontal = 4.dp))
-                Text(
-                    text = "%02d".format(displayMinute),
-                    color = Color.White,
-                    fontSize = 40.sp,
-                    fontWeight = if (selectedPart == TimePart.MINUTE) FontWeight.Bold else FontWeight.Normal,
-                    modifier = Modifier.clickable { selectedPart = TimePart.MINUTE }
-                )
-            }
-
-            Box(modifier = Modifier.height(90.dp), contentAlignment = Alignment.Center) {
-                if (selectedPart == TimePart.HOUR) {
-                    Picker(
-                        state = hourPickerState,
-                        contentDescription = "hour_picker",
-                        modifier = Modifier.size(64.dp)
-                    ) { option ->
-                        Text(text = option.toString(), color = Color.White)
-                    }
-                } else {
-                    Picker(
-                        state = minutePickerState,
-                        contentDescription = "minute_picker",
-                        modifier = Modifier.size(64.dp)
-                    ) { option ->
-                        Text(text = "%02d".format(option), color = Color.White)
-                    }
+            Picker(
+                state = pickerState,
+                contentDescription = "${suffix}_picker",
+                modifier = Modifier.fillMaxSize()
+            ) { option ->
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = "%02d".format(option),
+                        color = Color.White,
+                        fontSize = 52.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = suffix,
+                        color = Color.Gray,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(start = 6.dp, bottom = 8.dp)
+                    )
                 }
-            }
-        }
-
-        Row(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            ActionButton(label = "开始", symbol = "▶") {
-                if (remainingSeconds > 0) running = true
-            }
-            ActionButton(label = "暂停", symbol = "⏸") {
-                running = false
-            }
-            ActionButton(label = "结束", symbol = "⏹") {
-                running = false
-                remainingSeconds = 0
             }
         }
     }
 }
 
 @Composable
-private fun ActionButton(label: String, symbol: String, onClick: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Button(
-            onClick = onClick,
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF222222)),
-            modifier = Modifier.size(44.dp)
-        ) {
-            Text(text = symbol, color = Color.White)
-        }
-        Text(text = label, color = Color.White, fontSize = 10.sp)
+private fun ActionButton(icon: ImageVector, contentDesc: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF222222)),
+        modifier = Modifier.size(52.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDesc,
+            tint = Color.White,
+            modifier = Modifier.size(28.dp)
+        )
     }
 }
