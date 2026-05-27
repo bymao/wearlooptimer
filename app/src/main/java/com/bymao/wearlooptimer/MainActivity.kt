@@ -98,8 +98,8 @@ class MainActivity : ComponentActivity() {
 private fun TimerScreen() {
     val context = LocalContext.current
     val view = LocalView.current
-    var hour by remember { mutableIntStateOf(9) }
-    var minute by remember { mutableIntStateOf(20) }
+    var hour by remember { mutableIntStateOf(0) }
+    var minute by remember { mutableIntStateOf(0) }
     var running by remember { mutableStateOf(false) }
     var remainingSeconds by remember { mutableLongStateOf(hour * 3600L + minute * 60L) }
     var screenMode by remember { mutableStateOf(ScreenMode.TIMER) }
@@ -139,9 +139,13 @@ private fun TimerScreen() {
                 running = running,
                 onHourClick = { if (!running) screenMode = ScreenMode.PICKER_HOUR },
                 onMinuteClick = { if (!running) screenMode = ScreenMode.PICKER_MINUTE },
-                onStart = { if (remainingSeconds > 0) running = true },
-                onPause = { running = false },
-                onStop = { running = false; remainingSeconds = 0 }
+                onStartPause = { if (running) running = false else if (remainingSeconds > 0) running = true },
+                onStop = {
+                    running = false
+                    remainingSeconds = 0
+                    hour = 0
+                    minute = 0
+                }
             )
         }
         ScreenMode.PICKER_HOUR -> {
@@ -177,8 +181,7 @@ private fun TimerMainView(
     running: Boolean,
     onHourClick: () -> Unit,
     onMinuteClick: () -> Unit,
-    onStart: () -> Unit,
-    onPause: () -> Unit,
+    onStartPause: () -> Unit,
     onStop: () -> Unit
 ) {
     Column(
@@ -233,7 +236,7 @@ private fun TimerMainView(
             )
         }
 
-        // Buttons row - large icons, no text labels
+        // Buttons row - Start/Pause toggle + Stop
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -241,9 +244,20 @@ private fun TimerMainView(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ActionButton(icon = Icons.Filled.PlayArrow, contentDesc = "Start", onClick = onStart)
-            ActionButton(icon = IconPause, contentDesc = "Pause", onClick = onPause)
-            ActionButton(icon = IconStop, contentDesc = "Stop", onClick = onStop)
+            ActionButton(
+                icon = if (running) IconPause else Icons.Filled.PlayArrow,
+                contentDesc = if (running) "Pause" else "Start",
+                onClick = onStartPause,
+                size = 64.dp,
+                iconSize = 36.dp
+            )
+            ActionButton(
+                icon = IconStop,
+                contentDesc = "Stop",
+                onClick = onStop,
+                size = 64.dp,
+                iconSize = 36.dp
+            )
         }
     }
 }
@@ -322,18 +336,24 @@ private fun vibrateThreeTimes(context: Context) {
 }
 
 @Composable
-private fun ActionButton(icon: ImageVector, contentDesc: String, onClick: () -> Unit) {
+private fun ActionButton(
+    icon: ImageVector,
+    contentDesc: String,
+    onClick: () -> Unit,
+    size: androidx.compose.ui.unit.Dp = 52.dp,
+    iconSize: androidx.compose.ui.unit.Dp = 28.dp
+) {
     Button(
         onClick = onClick,
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF222222)),
-        modifier = Modifier.size(52.dp)
+        modifier = Modifier.size(size)
     ) {
         Icon(
             imageVector = icon,
             contentDescription = contentDesc,
             tint = Color.White,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(iconSize)
         )
     }
 }
