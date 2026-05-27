@@ -139,14 +139,13 @@ private fun TimerScreen() {
                 running = running,
                 onHourClick = { if (!running) screenMode = ScreenMode.PICKER_HOUR },
                 onMinuteClick = { if (!running) screenMode = ScreenMode.PICKER_MINUTE },
-                onStartPause = {
-                    if (running) {
-                        running = false
-                    } else {
-                        if (remainingSeconds > 0) running = true
-                    }
-                },
-                onStop = { running = false; remainingSeconds = 0; hour = 0; minute = 0 }
+                onStartPause = { if (running) running = false else if (remainingSeconds > 0) running = true },
+                onStop = {
+                    running = false
+                    remainingSeconds = 0
+                    hour = 0
+                    minute = 0
+                }
             )
         }
         ScreenMode.PICKER_HOUR -> {
